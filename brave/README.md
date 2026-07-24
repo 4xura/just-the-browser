@@ -4,7 +4,7 @@ title: Brave Browser configuration
 permalink: "brave/index.html"
 ---
 
-Brave Browser features can be configured with group policies. This project uses Windows Registry settings on Windows, and a Profile Manager file on macOS.
+[You should not use Brave at all](https://www.spacebar.news/stop-using-brave-browser/), but if you absolutely *must* use it, some of its features can be configured with group policies. This project uses Windows Registry settings on Windows, and a Profile Manager file on macOS.
 
 You can check which policies are applied in Brave Browser by navigating to the `brave://policy/` page.
 

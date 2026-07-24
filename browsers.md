@@ -39,4 +39,6 @@ Not sure which link to use? Try the [official download page](https://www.microso
 
 ### Brave Browser
 
-You can [get the latest version from GitHub](https://github.com/brave/brave-browser/releases/latest). There are also [Linux setup instructions](https://brave.com/linux/).
+[You should not use Brave Browser](https://www.spacebar.news/stop-using-brave-browser/).
+
+If you absolutely *must* use Brave for some reason, you can [get the latest version from GitHub](https://github.com/brave/brave-browser/releases/latest). There are also [Linux setup instructions](https://brave.com/linux/).
