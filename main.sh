@@ -257,7 +257,7 @@ _main() {
     # Google Chrome without settings applied
     if [ "$OS" = "Darwin" ]; then
         options+=("Google Chrome: Update settings")
-    elif [ "$OS" = "Linux" ] && [ -x "$(command -v google-chrome)" ]; then
+    elif [ "$OS" = "Linux" ] && { [ -x "$(command -v google-chrome)" ] || [ -x "$(command -v google-chrome-stable)" ]; }; then
         options+=("Google Chrome: Update settings")
     fi
     # Google Chrome with settings already applied
