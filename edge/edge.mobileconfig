@@ -86,6 +86,8 @@
             <false/>
             <key>PinningWizardAllowed</key>
             <false/>
+            <key>CopilotCoworkToolActionsEnabled</key>
+            <false/>
 		</dict>
         <!-- Microsoft Edge Beta -->
 		<dict>
@@ -168,6 +170,8 @@
             <key>SearchbarAllowed</key>
             <false/>
             <key>PinningWizardAllowed</key>
+            <false/>
+            <key>CopilotCoworkToolActionsEnabled</key>
             <false/>
 		</dict>
         <!-- Microsoft Edge Dev -->
@@ -252,6 +256,8 @@
             <false/>
             <key>PinningWizardAllowed</key>
             <false/>
+            <key>CopilotCoworkToolActionsEnabled</key>
+            <false/>
 		</dict>
         <!-- Microsoft Edge Canary -->
 		<dict>
@@ -334,6 +340,8 @@
             <key>SearchbarAllowed</key>
             <false/>
             <key>PinningWizardAllowed</key>
+            <false/>
+            <key>CopilotCoworkToolActionsEnabled</key>
             <false/>
 		</dict>
 	</array>
