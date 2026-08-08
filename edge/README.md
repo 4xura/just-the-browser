@@ -69,6 +69,7 @@ These are the policy settings in the Just the Browser configuration file.
 | SearchbarAllowed | Blocks the floating [Edge Search Bar](https://www.microsoft.com/en-us/edge/features/edge-search-bar), accessible from the "More tools" menu and the `Win+Shift+F` keyboard shortcut. If it's opened, Edge continues running in the background after all windows are closed. |
 | PinningWizardAllowed | Blocks Microsoft Edge from suggesting sites to pin to the Windows taskbar. Manually pinning sites is still allowed. |
 | CopilotCoworkToolActionsEnabled | Blocks Copilot from taking actions in the browser through [Copilot Cowork](https://learn.microsoft.com/en-us/microsoft-365/copilot/cowork/cowork-local-browser). |
+| ExtensionManifestV2Availability | Force Manifest v2 extensions (like uBlock Origin) to continue working until support is [completely removed](https://blogs.windows.com/msedgedev/2026/08/07/moving-the-microsoft-edge-extensions-ecosystem-forward-with-manifest-version-3/). |
 
 ### Documentation
 

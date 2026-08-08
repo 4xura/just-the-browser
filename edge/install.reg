@@ -36,6 +36,7 @@ Windows Registry Editor Version 5.00
 "SearchbarAllowed"=dword:00000000
 "PinningWizardAllowed"=dword:00000000
 "CopilotCoworkToolActionsEnabled"=dword:00000000
+"ExtensionManifestV2Availability"=dword:00000002
 
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\JustTheBrowserEdge]
 "DisplayName"="Just the Browser configuration - Microsoft Edge"

@@ -88,6 +88,8 @@
             <false/>
             <key>CopilotCoworkToolActionsEnabled</key>
             <false/>
+            <key>ExtensionManifestV2Availability</key>
+            <integer>2</integer>
 		</dict>
         <!-- Microsoft Edge Beta -->
 		<dict>
@@ -173,6 +175,8 @@
             <false/>
             <key>CopilotCoworkToolActionsEnabled</key>
             <false/>
+            <key>ExtensionManifestV2Availability</key>
+            <integer>2</integer>
 		</dict>
         <!-- Microsoft Edge Dev -->
 		<dict>
@@ -258,6 +262,8 @@
             <false/>
             <key>CopilotCoworkToolActionsEnabled</key>
             <false/>
+            <key>ExtensionManifestV2Availability</key>
+            <integer>2</integer>
 		</dict>
         <!-- Microsoft Edge Canary -->
 		<dict>
@@ -343,6 +349,8 @@
             <false/>
             <key>CopilotCoworkToolActionsEnabled</key>
             <false/>
+            <key>ExtensionManifestV2Availability</key>
+            <integer>2</integer>
 		</dict>
 	</array>
 	<key>PayloadDisplayName</key>
