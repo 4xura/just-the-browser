@@ -38,6 +38,8 @@
 			<false />
 			<key>DevToolsGenAiSettings</key>
 			<integer>2</integer>
+			<key>SearchContentSharingSettings</key>
+			<integer>1</integer>
 		</dict>
 	</array>
 	<key>PayloadDisplayName</key>

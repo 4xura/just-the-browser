@@ -8,5 +8,6 @@
   "TabCompareSettings": 2,
   "BuiltInDnsClientEnabled": false,
   "DefaultBrowserSettingEnabled": false,
-  "DevToolsGenAiSettings": 2
+  "DevToolsGenAiSettings": 2,
+  "SearchContentSharingSettings": 1
 }
