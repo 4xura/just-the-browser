@@ -1,5 +1,7 @@
 # Just the Browser
 
+> This fork is compacted to work on **Firefox Developer Edition** for Windows/Linux. Especially for pentesters who use the developer browser and hate telemetry data in the proxied HTTP traffic. 
+
 Just the Browser helps you remove AI features, telemetry data reporting, sponsored content, product integrations, and other annoyances from desktop web browsers. The goal is to give you "just the browser" and nothing else, using hidden settings in web browsers intended for companies and other organizations.
 
 This project includes configuration files for popular web browsers, documentation for installing and modifying them, and easy installation scripts.
