@@ -6,7 +6,7 @@
 
 # Allow alternate base URL as first command-line argument, for testing and development
 if ($args.Count -eq 0) {
-    $BaseURL = "https://raw.githubusercontent.com/corbindavenport/just-the-browser/main"
+    $BaseURL = "https://raw.githubusercontent.com/4xura/just-the-browser/main"
 } else {
     $BaseURL = $args[0]
 }
@@ -27,16 +27,82 @@ function Show-Header {
     Write-Host "`nJust the Browser ($($OS.Caption) Build $($OS.BuildNumber))`n========`n"
 }
 
-# Remove Firefox JSON file if it exists, so it does not conflict with registry entries
-# Previous versions of Just the Browser used the JSON method
-function Uninstall-FirefoxJSON {
-    Param(
-        [Parameter(Position = 0, Mandatory = $true)]
-        [String]$InstallPath
+# Find installed Firefox release and Developer Edition directories
+function Get-FirefoxInstallPaths {
+    $Candidates = New-Object System.Collections.Generic.List[string]
+    $InstallPaths = New-Object System.Collections.Generic.List[string]
+
+    # Mozilla records release and Developer Edition under separate product keys.
+    $MozillaRegistryPaths = @(
+        "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox",
+        "HKLM:\SOFTWARE\Mozilla\Firefox Developer Edition",
+        "HKLM:\SOFTWARE\WOW6432Node\Mozilla\Mozilla Firefox",
+        "HKLM:\SOFTWARE\WOW6432Node\Mozilla\Firefox Developer Edition",
+        "HKCU:\SOFTWARE\Mozilla\Mozilla Firefox",
+        "HKCU:\SOFTWARE\Mozilla\Firefox Developer Edition"
     )
-    if (Test-Path "$InstallPath\distribution\policies.json") {
-        Write-Host "Previous Firefox policies.json file found, deleting..."
-        Remove-Item -Path "$InstallPath\distribution\policies.json" -Force
+    foreach ($RegistryPath in $MozillaRegistryPaths) {
+        if (Test-Path -LiteralPath $RegistryPath) {
+            $Version = (Get-ItemProperty -LiteralPath $RegistryPath -ErrorAction SilentlyContinue).CurrentVersion
+            if ($Version) {
+                $MainRegistryPath = "$RegistryPath\$Version\Main"
+                $InstallDirectory = (Get-ItemProperty -LiteralPath $MainRegistryPath -ErrorAction SilentlyContinue)."Install Directory"
+                if ($InstallDirectory) {
+                    $Candidates.Add($InstallDirectory)
+                }
+            }
+        }
+    }
+
+    # Also check uninstall entries, which can contain custom installation paths.
+    $UninstallRegistryPaths = @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+    )
+    foreach ($RegistryPath in $UninstallRegistryPaths) {
+        Get-ChildItem -LiteralPath $RegistryPath -ErrorAction SilentlyContinue | ForEach-Object {
+            $Application = Get-ItemProperty -LiteralPath $_.PSPath -ErrorAction SilentlyContinue
+            if (($Application.DisplayName -like "*Firefox*") -and $Application.InstallLocation) {
+                $Candidates.Add($Application.InstallLocation)
+            }
+        }
+    }
+
+    # Include the default directories in case registry registration is missing.
+    $ProgramDirectories = @($env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:ProgramW6432)
+    foreach ($ProgramDirectory in $ProgramDirectories) {
+        if ($ProgramDirectory) {
+            $Candidates.Add((Join-Path $ProgramDirectory "Mozilla Firefox"))
+            $Candidates.Add((Join-Path $ProgramDirectory "Firefox Developer Edition"))
+        }
+    }
+
+    # Only return real Firefox directories, without case-insensitive duplicates.
+    $SeenPaths = @{}
+    foreach ($Candidate in $Candidates) {
+        if ($Candidate -and (Test-Path -LiteralPath (Join-Path $Candidate "firefox.exe") -PathType Leaf)) {
+            $InstallPath = (Get-Item -LiteralPath $Candidate).FullName
+            if (-not $SeenPaths.ContainsKey($InstallPath)) {
+                $SeenPaths[$InstallPath] = $true
+                $InstallPaths.Add($InstallPath)
+            }
+        }
+    }
+    Return $InstallPaths.ToArray()
+}
+
+# Find per-installation policy files without modifying files owned by the user or another tool
+function Get-FirefoxJSONPolicyFiles {
+    Param(
+        [Parameter(Position = 0)]
+        [String[]]$InstallPaths
+    )
+    foreach ($InstallPath in $InstallPaths) {
+        $PolicyPath = Join-Path $InstallPath "distribution\policies.json"
+        if (Test-Path -LiteralPath $PolicyPath -PathType Leaf) {
+            Write-Output $PolicyPath
+        }
     }
 }
 
@@ -176,12 +242,17 @@ function Uninstall-Brave {
 function Install-Firefox {
     Param(
         [Parameter(Position = 0)]
-        [String]$InstallPath
+        [String[]]$InstallPaths
     )
     Show-Header
-    # Delete old JSON configuration if the Firefox registry path was found, and if the JSON file exists
-    if ($InstallPath) {
-        Uninstall-FirefoxJSON "$InstallPath"
+    # Registry policies can coexist with per-installation JSON policies. Never overwrite or delete an existing file.
+    $JSONPolicyFiles = @(Get-FirefoxJSONPolicyFiles $InstallPaths)
+    if ($JSONPolicyFiles.Count -gt 0) {
+        Write-Host "Existing Firefox policies.json file(s) found and left unchanged:"
+        foreach ($PolicyFile in $JSONPolicyFiles) {
+            Write-Host "  $PolicyFile"
+        }
+        Write-Host ""
     }
     # Download file
     Write-Host "Downloading registry file, please wait..."
@@ -206,13 +277,9 @@ function Install-Firefox {
 function Uninstall-Firefox {
     Param(
         [Parameter(Position = 0)]
-        [String]$InstallPath
+        [String[]]$InstallPaths
     )
     Show-Header
-    # Delete old JSON configuration if the Firefox registry path was found, and if the JSON file exists
-    if ($InstallPath) {
-        Uninstall-FirefoxJSON "$InstallPath"
-    }
     # Download file
     try {
         Invoke-WebRequest $FirefoxUninstallRegistry -OutFile "$env:LocalAppData\firefox.reg"
@@ -224,7 +291,15 @@ function Uninstall-Firefox {
     # Install file
     $FirefoxUninstall = Start-Process "reg.exe" -ArgumentList "import `"$env:LocalAppData\firefox.reg`"" -WindowStyle Hidden -Wait -PassThru
     if ($FirefoxUninstall.ExitCode -eq 0) {
-        Read-Host -Prompt "Removed Mozilla Firefox settings. Press Enter/Return to continue" | Out-Null
+        $JSONPolicyFiles = @(Get-FirefoxJSONPolicyFiles $InstallPaths)
+        if ($JSONPolicyFiles.Count -gt 0) {
+            Write-Host "Removed the Just the Browser registry settings. These existing policy files were left unchanged:"
+            foreach ($PolicyFile in $JSONPolicyFiles) {
+                Write-Host "  $PolicyFile"
+            }
+            Write-Host "Firefox may still show policies from those files."
+        }
+        Read-Host -Prompt "Removed Mozilla Firefox registry settings. Press Enter/Return to continue" | Out-Null
     }
     else {
         Read-Host -Prompt "Remove failed! Press Enter/Return to continue" | Out-Null
@@ -281,40 +356,19 @@ function Show-Menu {
                 })
         }
     }
-    # Mozilla Firefox
-    if (Test-Path "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox") {
-        # Find the current version installed, like: 147.0.1 (AArch64 en-US)
-        $FirefoxVersion = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox" -ErrorAction SilentlyContinue).CurrentVersion
-        # Find the registry values for the specified version
-        if (Test-Path "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox\$FirefoxVersion\Main") {
-            # Finds the installation path, like: C:\Program Files\Mozilla Firefox
-            $FirefoxPath = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox\$FirefoxVersion\Main" -ErrorAction SilentlyContinue)."Install Directory"
-            # Firefox without settings alreay applied
-            $options.Add(@{
-                    Label  = "Mozilla Firefox: Update settings"
-                    Action = { Install-Firefox "$FirefoxPath" }
-                })
-            # Firefox with settings already applied
-            # This script previously used the JSON file for Firefox, so that must be checked in addition to the registry method
-            if ((Test-Path "$FirefoxPath\distribution\policies.json") -or (Test-Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox\FirefoxHome")) {
-                $options.Add(@{
-                        Label  = "Mozilla Firefox: Remove settings"
-                        Action = { Uninstall-Firefox "$FirefoxPath" }
-                    })
-            }
-        }
-        else {
-            $options.Add(@{
-                    Label  = "Mozilla Firefox: Update settings"
-                    Action = { Install-Firefox }
-                })
-            if (Test-Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox\FirefoxHome") {
-                $options.Add(@{
-                        Label  = "Mozilla Firefox: Remove settings"
-                        Action = { Uninstall-Firefox }
-                    })
-            }
-        }
+    # Mozilla Firefox release and Developer Edition
+    $FirefoxPaths = @(Get-FirefoxInstallPaths)
+    if ($FirefoxPaths.Count -gt 0) {
+        $options.Add(@{
+                Label  = "Mozilla Firefox: Update settings"
+                Action = { Install-Firefox $FirefoxPaths }
+            })
+    }
+    if (Test-Path "HKLM:\SOFTWARE\Policies\Mozilla\Firefox\FirefoxHome") {
+        $options.Add(@{
+                Label  = "Mozilla Firefox: Remove settings"
+                Action = { Uninstall-Firefox $FirefoxPaths }
+            })
     }
     # Exit option
     $options.Add(@{
